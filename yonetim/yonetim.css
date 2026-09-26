@@ -27,7 +27,7 @@ label input, label select, label textarea { color: var(--ink); font-size: 15px; 
 label.check { flex-direction: row; align-items: center; gap: 6px; margin: 0; }
 .bar { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; } .bar.wrap { flex-wrap: wrap; } .bar input:not([type]) , .bar input[type=text] { flex: 1; min-width: 160px; }
 .card { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
-.login { max-width: 380px; margin: 60px auto; } .login form { display: flex; flex-direction: column; } .login h1 { margin: 0 0 4px; }
+.login { max-width: 380px; margin: 60px auto; } .login form { display: flex; flex-direction: column; } #captcha { min-height: 70px; margin: 4px 0 10px; } .login h1 { margin: 0 0 4px; }
 .muted { color: var(--muted); } .err { color: var(--bad); min-height: 1.2em; margin: 6px 0 0; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .stat { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }

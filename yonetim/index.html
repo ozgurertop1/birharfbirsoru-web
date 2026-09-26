@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Yönetim · 1 Harf 1 Soru</title>
+<link rel="stylesheet" href="yonetim.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script src="config.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="t a">1</span><span class="t">H</span><span class="t">1</span><span class="t">S</span><b>Yönetim</b></div>
+  <div id="who" class="who" hidden><span id="whoEmail"></span><button class="ghost" id="logout">Çıkış</button></div>
+</header>
+
+<section id="login" class="login card" hidden>
+  <h1>Giriş</h1>
+  <p class="muted">Sadece yönetici hesapları girebilir.</p>
+  <form id="loginForm">
+    <label>E-posta <input type="email" id="email" autocomplete="username" required></label>
+    <label>Şifre <input type="password" id="password" autocomplete="current-password" required></label>
+    <div id="captcha"></div>
+    <button type="submit" id="loginBtn">Giriş yap</button>
+    <p id="loginErr" class="err"></p>
+  </form>
+</section>
+
+<section id="app" hidden>
+  <nav id="tabs">
+    <button data-tab="overview" class="on">Genel bakış</button>
+    <button data-tab="players">Oyuncular</button>
+    <button data-tab="questions">Sorular</button>
+    <button data-tab="reports">Bildirimler <span id="badgeReports" class="badge" hidden></span></button>
+    <button data-tab="feedback">Geri bildirim <span id="badgeFeedback" class="badge" hidden></span></button>
+    <button data-tab="daily">Günün Bulmacası</button>
+    <button data-tab="words">Kelimeler</button>
+    <button data-tab="banned">Yasaklı kelimeler</button>
+    <button data-tab="log">İşlem kaydı</button>
+  </nav>
+
+  <div class="tab" id="tab-overview"></div>
+
+  <div class="tab" id="tab-players" hidden>
+    <div class="bar"><input id="playerSearch" placeholder="İsim ya da oyuncu kimliği ara"><button id="playerSearchBtn">Ara</button></div>
+    <div id="playerList"></div>
+    <div id="playerDetail"></div>
+  </div>
+
+  <div class="tab" id="tab-questions" hidden>
+    <div class="bar wrap">
+      <select id="qBank"><option value="classic">Klasik</option><option value="english">İngilizce</option><option value="kids">Kolay Mod</option></select>
+      <select id="qLetter"></select>
+      <select id="qDiff"><option value="">Tüm zorluklar</option><option>kolay</option><option>orta</option><option>zor</option></select>
+      <select id="qActive"><option value="">Aktif + pasif</option><option value="true">Sadece aktif</option><option value="false">Sadece pasif</option></select>
+      <label class="check"><input type="checkbox" id="qFlagged"> Sadece uyarılılar</label>
+      <input id="qSearch" placeholder="Soru, cevap ya da no ara">
+      <button id="qSearchBtn">Listele</button>
+      <button id="qAdd" class="primary">+ Yeni soru</button>
+    </div>
+    <div id="qList"></div>
+  </div>
+
+  <div class="tab" id="tab-reports" hidden><div id="reportList"></div></div>
+
+  <div class="tab" id="tab-feedback" hidden>
+    <div class="bar"><select id="fbStatus"><option value="yeni">Yeni</option><option value="okundu">Okundu</option><option value="cozuldu">Çözüldü</option><option value="">Hepsi</option></select></div>
+    <div id="fbList"></div>
+  </div>
+
+  <div class="tab" id="tab-daily" hidden>
+    <div class="bar"><input type="date" id="dailyDay"><button id="dailyBtn">Göster</button></div>
+    <div id="dailyBox"></div>
+  </div>
+
+  <div class="tab" id="tab-words" hidden>
+    <div class="bar wrap"><select id="wCat"></select><input id="wSearch" placeholder="Başlangıç harfleri (ör. Ka)"><button id="wSearchBtn">Listele</button></div>
+    <div class="bar"><input id="wNew" placeholder="Yeni kelime (ör. Kanarya)"><button id="wAdd" class="primary">Ekle</button></div>
+    <div id="wList"></div>
+  </div>
+
+  <div class="tab" id="tab-banned" hidden>
+    <p class="muted">Oyuncu isimlerinde yasaklı kelimeler. <b>tam</b>: ismin kendisi, <b>başı</b>: isim bununla başlıyorsa, <b>içinde</b>: ismin herhangi bir yerinde. Kelimeler küçük harfe ve Türkçe karakterleri sadeleştirilmiş hâle çevrilir.</p>
+    <div class="bar"><input id="bNew" placeholder="Kelime"><select id="bMode"><option value="contains">içinde</option><option value="prefix">başı</option><option value="exact">tam</option></select><button id="bAdd" class="primary">Ekle</button></div>
+    <div id="bList"></div>
+  </div>
+
+  <div class="tab" id="tab-log" hidden><div id="logList"></div></div>
+</section>
+
+<dialog id="qDialog">
+  <form id="qForm" method="dialog">
+    <h2 id="qTitle">Soru</h2>
+    <input type="hidden" id="fId">
+    <div class="row">
+      <label>Harf <select id="fLetter"></select></label>
+      <label>Zorluk <select id="fDiff"><option>kolay</option><option>orta</option><option>zor</option></select></label>
+      <label>Konu <select id="fTopic"></select></label>
+      <label class="check"><input type="checkbox" id="fActive" checked> Aktif</label>
+    </div>
+    <label>Soru <textarea id="fText" rows="3" required></textarea></label>
+    <label>Cevaplar <span class="muted">(ilki gösterilir; diğerlerini | ile ayır)</span><input id="fAnswers" required></label>
+    <p id="fErr" class="err"></p>
+    <div class="actions"><button type="button" id="qCancel" class="ghost">Vazgeç</button><button type="submit" class="primary">Kaydet</button></div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+<script src="yonetim.js"></script>
+</body>
+</html>

@@ -61,7 +61,12 @@ function renderCaptcha() {
     language: 'tr',
     callback: (t) => (captchaToken = t),
     'expired-callback': () => (captchaToken = null),
-    'error-callback': () => ($('loginErr').textContent = 'Doğrulama yüklenemedi. Sayfayı yenileyin.'),
+    'error-callback': (code) => {
+      $('loginErr').textContent = String(code).startsWith('1102')
+        ? `Cloudflare bu adresi tanımıyor (${code}). Turnstile → Hostname listesine "${location.hostname}" eklenmeli.`
+        : `Doğrulama yüklenemedi (hata ${code}). Sayfayı yenileyin.`;
+      return true;
+    },
   });
 }
 

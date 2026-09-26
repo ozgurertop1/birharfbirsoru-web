@@ -2,11 +2,11 @@
 <title>Gizlilik Politikası · 1 Harf 1 Soru</title><link rel="stylesheet" href="style.css"></head><body><main>
 <header><a href="index.html" aria-label="1 Harf 1 Soru ana sayfa"><span class="t a">1</span><span class="t">H</span><span class="t">A</span><span class="t">R</span><span class="t">F</span></a></header>
 <h1>Gizlilik Politikası ve KVKK Aydınlatma Metni</h1>
-<p class="meta">Son güncelleme: 26 Eylül 2026</p>
+<p class="meta">Son güncelleme: 26 Eylül 2026 (reklamlar ve çökme raporları eklendi)</p>
 
 <p>Bu metin, <b>1 Harf 1 Soru</b> mobil oyununu ("Uygulama") kullanırken hangi kişisel verilerinin işlendiğini, neden işlendiğini ve haklarını 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında açıklar.</p>
 
-<div class="card"><b>Kısaca:</b> Uygulama hesap formu istemez; e-posta, telefon, konum, rehber ya da fotoğraf toplamaz, reklam göstermez ve verilerini kimseye satmaz. Oyunu oynatabilmek için seçtiğin takma adı, avatarını ve oyun sonuçlarını saklar. Hesabını istediğin an uygulamanın içinden silebilirsin.</div>
+<div class="card"><b>Kısaca:</b> Uygulama hesap formu istemez; e-posta, telefon, rehber ya da fotoğraf istemez ve verilerini kimseye satmaz. Oyunu oynatabilmek için seçtiğin takma adı, avatarını ve oyun sonuçlarını saklar. Uygulama ücretsizdir ve <b>Google AdMob reklamları</b> gösterir; reklamlar için telefonunun reklam kimliği Google'a iletilir. Hesabını istediğin an uygulamanın içinden silebilirsin.</div>
 
 <h2>1. Veri sorumlusu</h2>
 <p>Özgür Ertop (şahıs) · E-posta: <a href="mailto:birharfbirsoru.app@gmail.com">birharfbirsoru.app@gmail.com</a></p>
@@ -21,36 +21,48 @@
 <tr><td>Geri bildirim mesajların ve bildirdiğin hatalı sorular (mesajla birlikte yalnızca telefonun türü: iOS/Android ve sürümü)</td><td>Öneri ve şikâyetleri değerlendirmek, hatalı soruları düzeltmek</td><td>Hesabını silene kadar</td></tr>
 <tr><td>Cihaz kimliğinin geri çevrilemez özeti (hash)</td><td>Günün Bulmacası'nın aynı cihazda birden çok hesapla oynanmasını önlemek</td><td>7 gün (hesabını silsen de bu süre boyunca tutulur, sonra otomatik silinir)</td></tr>
 <tr><td>Robot doğrulaması sinyalleri (IP adresi ve cihaz/tarayıcı bilgileri)</td><td>İlk açılışta sahte hesap açılmasını önlemek (Cloudflare Turnstile)</td><td>Cloudflare'ın kendi politikasına göre</td></tr>
+<tr><td>Reklam kimliği (Android Advertising ID), IP adresinden çıkarılan yaklaşık konum, cihaz bilgileri ve reklam etkileşimleri (gösterim, tıklama)</td><td>Reklam göstermek, reklamların ölçülmesi ve reklam sahtekârlığının önlenmesi (Google AdMob). Avrupa Ekonomik Alanı ve Birleşik Krallık'taki kullanıcılardan önce izin istenir.</td><td>Google'ın kendi politikasına göre</td></tr>
+<tr><td>Çökme raporları (hata anındaki teknik bilgiler: telefon modeli, işletim sistemi ve uygulama sürümü, hata kaydı)</td><td>Uygulamadaki hataları bulup düzeltmek (Sentry). IP adresi ve cihaz adı gönderilmez.</td><td>En fazla 90 gün</td></tr>
 <tr><td>Teknik kayıtlar (IP adresi, istek zamanı)</td><td>Hizmetin güvenliği ve hata ayıklama</td><td>Sunucu sağlayıcısının kayıt süresi boyunca</td></tr>
 </table>
 <p>Hiç isim seçmeden bırakılan (oyuna başlamamış) hesaplar 3 gün sonra otomatik silinir.</p>
 
 <h2>3. Hukuki sebepler</h2>
-<p>Veriler KVKK'nın 5. maddesi kapsamında; oyun hizmetinin sunulması için gerekli olması (sözleşmenin kurulması ve ifası) ile hile ve kötüye kullanımın önlenmesi, güvenlik ve hizmetin iyileştirilmesi gibi meşru menfaatler sebebiyle işlenir.</p>
+<p>Veriler KVKK'nın 5. maddesi kapsamında; oyun hizmetinin sunulması için gerekli olması (sözleşmenin kurulması ve ifası) ile hile ve kötüye kullanımın önlenmesi, güvenlik, hizmetin iyileştirilmesi ve ücretsiz hizmetin reklamla finanse edilmesi gibi meşru menfaatler sebebiyle işlenir. Kişiselleştirilmiş reklamlar için gereken durumlarda izin istenir ve bu izni istediğin zaman geri alabilirsin (bkz. 5. bölüm).</p>
 
 <h2>4. Aktarım ve hizmet sağlayıcılar</h2>
-<p>Veriler satılmaz ve reklam amacıyla kullanılmaz. Yalnızca hizmeti çalıştıran altyapı sağlayıcılarıyla, hizmetin gerektirdiği ölçüde paylaşılır:</p>
+<p>Veriler satılmaz. Hizmeti çalıştıran sağlayıcılarla ve reklam için Google ile, gerektirdiği ölçüde paylaşılır. Oyun verilerin (cevapların, puanların, takma adın) reklam için kullanılmaz ve Google'a gönderilmez.</p>
 <ul>
 <li><b>Supabase</b>: veritabanı ve oturum altyapısı; sunucular Avrupa Birliği'nde (Frankfurt).</li>
 <li><b>Cloudflare Turnstile</b>: robot doğrulaması; Cloudflare'ın sunucuları yurt dışında olabilir.</li>
+<li><b>Google AdMob</b> (Google Ireland Limited / Google LLC): reklam gösterimi. <a href="https://policies.google.com/technologies/partner-sites?hl=tr">Google'ın ortak sitelerde verileri nasıl kullandığı</a>.</li>
+<li><b>Sentry</b>: çökme raporları; sunucular Avrupa Birliği'nde (Almanya).</li>
 <li><b>Expo</b>: uygulama güncellemelerinin dağıtımı.</li>
 <li><b>Google Play / Apple App Store</b>: uygulamanın indirilmesi; mağazaların kendi politikaları geçerlidir.</li>
 </ul>
 <p>Bu sağlayıcıların bir kısmı yurt dışında bulunduğundan veriler, KVKK'nın 9. maddesine uygun olarak yurt dışına aktarılabilir.</p>
 
-<h2>5. Diğer oyuncuların gördükleri</h2>
+<h2>5. Reklamlar ve tercihlerin</h2>
+<ul>
+<li>Oyun sırasında reklam gösterilmez; reklamlar tur bittikten sonra ya da senin isteğinle ("Reklam izle, joker kazan") çıkar.</li>
+<li>Reklamların içerik seviyesi genel izleyiciye uygun olacak şekilde sınırlandırılmıştır.</li>
+<li>Reklam kimliğini sıfırlamak ya da kişiselleştirilmiş reklamları kapatmak için: Android <b>Ayarlar → Google → Reklamlar</b> (telefonuna göre "Gizlilik → Reklamlar").</li>
+<li>Avrupa Ekonomik Alanı ve Birleşik Krallık'taysan izin tercihini uygulamada <b>Ayarlar → Reklam gizlilik tercihleri</b> ile değiştirebilirsin.</li>
+</ul>
+
+<h2>6. Diğer oyuncuların gördükleri</h2>
 <p>Takma adın, avatarın, Günün Bulmacası puanın ve sıralaman diğer oyunculara görünür. Gerçek adını takma ad olarak kullanmak zorunda değilsin.</p>
 
-<h2>6. Çocuklar</h2>
-<p>Uygulamanın kolay sorulardan oluşan Kolay Mod adlı bir modu vardır. Çocuklardan ek bir kişisel veri toplanmaz. 13 yaşından küçük çocukların uygulamayı ebeveyn ya da vasi gözetiminde kullanmasını öneririz.</p>
+<h2>7. Çocuklar</h2>
+<p>Uygulamanın kolay sorulardan oluşan Kolay Mod adlı bir modu vardır. Çocuklardan ek bir kişisel veri toplanmaz. Uygulama 13 yaş ve üzerine yöneliktir ve reklam içerir; 13 yaşından küçük çocukların uygulamayı ebeveyn ya da vasi gözetiminde kullanmasını öneririz.</p>
 
-<h2>7. Hesabını silme</h2>
+<h2>8. Hesabını silme</h2>
 <p>Uygulamada <b>Ayarlar → Hesabımı sil</b> ile bütün ilerlemen, başarımların, jokerlerin, sıralamadaki sonuçların, geri bildirimlerin ve hesabın kalıcı olarak silinir. Uygulamaya erişemiyorsan <a href="hesap-silme.html">hesap silme sayfasındaki</a> adımları izleyebilirsin.</p>
 
-<h2>8. Hakların (KVKK madde 11)</h2>
+<h2>9. Hakların (KVKK madde 11)</h2>
 <p>Kişisel verilerinin işlenip işlenmediğini öğrenme, bilgi talep etme, amacını öğrenme, aktarıldığı kişileri bilme, eksik ya da yanlışsa düzeltilmesini, silinmesini isteme, itiraz etme ve zararının giderilmesini talep etme haklarına sahipsin. Taleplerini <a href="mailto:birharfbirsoru.app@gmail.com">birharfbirsoru.app@gmail.com</a> adresine iletebilirsin; en geç 30 gün içinde cevaplanır.</p>
 
-<h2>9. Değişiklikler</h2>
+<h2>10. Değişiklikler</h2>
 <p>Bu metin güncellenirse yeni hali bu sayfada yayımlanır ve üstteki tarih değişir.</p>
 <footer><a href="gizlilik.html">Gizlilik Politikası</a><a href="kosullar.html">Kullanım Koşulları</a><a href="hesap-silme.html">Hesap Silme</a><span>İletişim: <a href="mailto:birharfbirsoru.app@gmail.com">birharfbirsoru.app@gmail.com</a></span></footer>
 </main></body></html>

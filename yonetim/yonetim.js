@@ -190,10 +190,11 @@ let playerPage = 0;
 loaders.players = () => loadPlayers();
 $('playerSearchBtn').addEventListener('click', () => { playerPage = 0; loadPlayers(); });
 $('playerSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { playerPage = 0; loadPlayers(); } });
+$('playerSort').addEventListener('change', () => { playerPage = 0; loadPlayers(); });
 
 async function loadPlayers() {
   $('playerDetail').innerHTML = '';
-  const res = await rpc('admin_players', { p_search: $('playerSearch').value, p_limit: PAGE, p_offset: playerPage * PAGE });
+  const res = await rpc('admin_players', { p_search: $('playerSearch').value, p_limit: PAGE, p_offset: playerPage * PAGE, p_sort: $('playerSort').value });
   $('playerList').innerHTML = `
     <div class="card scroll"><table>
       <tr><th>İsim</th><th>Katıldı</th><th>Tur</th><th>Doğru</th><th class="hide-sm">Seri</th><th class="hide-sm">Düello galibiyeti</th><th>Son tur</th></tr>

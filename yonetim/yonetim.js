@@ -185,6 +185,53 @@ loaders.overview = async () => {
     </div>`;
 };
 
+// ── Analitik ─────────────────────────────────────────────────────────────
+// Geri dönüş: kayıt gününden 1 / 7 / 30 gün sonra uygulamayı açan ya da oynayanların oranı (gün dolmadıysa —)
+const SCREEN_NAMES = {
+  intro: 'Tanıtım', name: 'İsim girişi', home: 'Ana ekran', modes: 'Oyun Modları', rules: 'Kurallar', game: 'Oyun',
+  result: 'Sonuç', settings: 'Ayarlar', versus: '1v1 Düello', lobby: 'Düello odası', versusResult: 'Düello sonucu',
+  ranked: 'Dereceli Maç', matchmaking: 'Rakip aranıyor', leagues: 'Lig Tablosu', leaderboard: 'Günün sıralaması',
+  achievements: 'Başarımlar', rewards: 'Ödüller', avatar: 'Avatar', challenge: 'Meydan okuma', challenges: 'Meydan okumalar',
+  theme: 'Tema', sound: 'Ses', feedback: 'Geri bildirim', playerName: 'İsim değiştir',
+};
+loaders.analytics = async () => {
+  const box = $('tab-analytics');
+  box.innerHTML = '<p class="muted">Yükleniyor…</p>';
+  const a = await rpc('admin_analytics');
+  const pct = (v) => (v == null ? '—' : `%${v}`);
+  const stat = (v, label) => `<div class="stat"><b>${v}</b><span>${esc(label)}</span></div>`;
+  const cell = (k, n) => (k == null ? '<td class="muted">—</td>' : `<td>${k} <span class="muted">(%${n ? Math.round((100 * k) / n) : 0})</span></td>`);
+  const f = a.funnel || {};
+  const step = (v, label) => `<tr><td>${esc(label)}</td><td>${num(v)}</td><td>${f.named ? Math.round((100 * v) / f.named) : 0}%</td></tr>`;
+  box.innerHTML = `
+    <div class="grid">
+      ${stat(pct(a.rates?.d1), 'ertesi gün geri gelen')}
+      ${stat(pct(a.rates?.d7), '7. gün geri gelen')}
+      ${stat(pct(a.rates?.d30), '30. gün geri gelen')}
+      ${stat(num(a.opens_7d), 'son 7 gün uygulama açılışı')}
+    </div>
+    <p class="muted">Hedef (kelime oyunları için kaba ölçü): ertesi gün %35–40, 7. gün %15, 30. gün %7.</p>
+    <div class="card scroll"><b>İlk oyun hunisi (son 60 günde isim girenler)</b>
+      <table><tr><th>Adım</th><th>Oyuncu</th><th>Oran</th></tr>
+      ${step(f.named, 'İsim girdi')}${step(f.started, 'İlk turu başlattı')}${step(f.finished, 'Bir turu bitirdi')}
+      ${step(f.three_rounds, '3+ tur bitirdi')}${step(f.two_days, '2+ farklı gün oynadı')}${step(f.daily, 'Günün Bulmacası oynadı')}
+      ${step(f.versus, 'Düello oynadı')}${step(f.ranked, 'Dereceli maç oynadı')}</table>
+    </div>
+    <div class="card scroll"><b>Oyunu bırakanların en son gördüğü ekran</b>
+      <p class="muted">En az 3 gün önce gelip son 3 gündür hiç dönmeyen oyuncular. "(kayıt yok)": ölçüm başlamadan önce gelenler.</p>
+      <table><tr><th>Ekran</th><th>Oyuncu</th></tr>
+      ${(a.churn_screens || []).map((c) => `<tr><td>${esc(SCREEN_NAMES[c.screen] || c.screen)}</td><td>${num(c.n)}</td></tr>`).join('') || '<tr><td colspan="2" class="muted">Henüz yok</td></tr>'}</table>
+    </div>
+    <div class="card scroll"><b>Kayıt gününe göre geri dönüş</b>
+      <table><tr><th>Kayıt günü</th><th>Oyuncu</th><th>1. gün</th><th>7. gün</th><th>30. gün</th><th>İlk hafta herhangi bir gün</th></tr>
+      ${(a.cohorts || []).map((c) => `<tr><td>${fmtDay(c.day)}</td><td>${num(c.n)}</td>${cell(c.d1, c.n)}${cell(c.d7, c.n)}${cell(c.d30, c.n)}${cell(c.w1, c.n)}</tr>`).join('') || '<tr><td colspan="6" class="muted">Henüz yok</td></tr>'}</table>
+    </div>
+    <div class="card scroll"><b>Son 7 gün en çok açılan ekranlar</b>
+      <table><tr><th>Ekran</th><th>Açılış</th><th>Oyuncu</th></tr>
+      ${(a.screens_7d || []).map((c) => `<tr><td>${esc(SCREEN_NAMES[c.screen] || c.screen)}</td><td>${num(c.n)}</td><td>${num(c.users)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">Henüz yok (ölçüm 1.1.2 ile başlıyor)</td></tr>'}</table>
+    </div>`;
+};
+
 // ── Oyuncular ────────────────────────────────────────────────────────────
 let playerPage = 0;
 loaders.players = () => loadPlayers();

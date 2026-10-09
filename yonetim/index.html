@@ -31,6 +31,7 @@
 <section id="app" hidden>
   <nav id="tabs">
     <button data-tab="overview" class="on">Genel bakış</button>
+    <button data-tab="analytics">Analitik</button>
     <button data-tab="players">Oyuncular</button>
     <button data-tab="questions">Sorular</button>
     <button data-tab="reports">Bildirimler <span id="badgeReports" class="badge" hidden></span></button>
@@ -42,6 +43,7 @@
   </nav>
 
   <div class="tab" id="tab-overview"></div>
+  <div class="tab" id="tab-analytics" hidden></div>
 
   <div class="tab" id="tab-players" hidden>
     <div class="bar"><input id="playerSearch" placeholder="İsim ya da oyuncu kimliği ara"><select id="playerSort" title="Sıralama"><option value="recent">Son oynayan önce</option><option value="joined">Yeni katılan önce</option><option value="games">En çok tur önce</option></select><button id="playerSearchBtn">Ara</button></div>

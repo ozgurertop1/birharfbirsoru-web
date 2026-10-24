@@ -1,0 +1,257 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Tarayıcıda oyna · 1 Harf 1 Soru</title>
+<meta name="description" content="Her harfe bir soru, süre işliyor! İndirmeden, tarayıcında hemen oyna.">
+<meta property="og:title" content="1 Harf 1 Soru · Tarayıcıda hemen oyna">
+<meta property="og:description" content="Her harfe bir soru, 4 dakika. Kaç tanesini bilirsin?">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script src="oyna-config.js"></script>
+<style>
+/* Uygulamadaki Klasik modun web sürümü: sorular, cevap kontrolü, süre ve puan sunucuda (start_round / submit_answer / finish_round). */
+main { padding-top: 16px; }
+header .t { width: 27px; height: 31px; font-size: 16px; border-bottom-width: 4px; }
+header a { gap: 4px; }
+[hidden] { display: none !important; }
+.center { text-align: center; }
+.big-btn { display: block; width: 100%; border: 0; cursor: pointer; background: #3E8E41; color: #fff; font: 800 20px/1 Georgia, serif; padding: 16px; border-radius: 14px; border-bottom: 5px solid #2C6B2F; margin-top: 12px; text-align: center; text-decoration: none; }
+.big-btn.navy { background: #2F4A63; border-bottom-color: #1D3044; }
+.big-btn.pass { background: #E0A418; border-bottom-color: #A67806; color: #2A2622; }
+.big-btn:disabled { opacity: .5; }
+#captcha { display: flex; justify-content: center; margin: 16px 0; min-height: 70px; }
+.bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.pill { background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px; font: 800 20px/1.2 Georgia, serif; font-variant-numeric: tabular-nums; }
+.pill.low { color: #C8472F; border-color: #C8472F; }
+.grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 3px; margin-bottom: 12px; }
+.cell { aspect-ratio: 0.87; border-radius: 5px; display: flex; align-items: center; justify-content: center; font: 900 clamp(9px, 3vw, 15px)/1 Georgia, serif;
+        background: var(--tile); color: #3A2A18; border: 1.2px solid var(--tile-edge); }
+.cell.correct { background: #3E8E41; border-color: #3E8E41; color: #fff; }
+.cell.wrong { background: #C8472F; border-color: #C8472F; color: #fff; }
+.cell.passed { background: #E0A418; border-color: #E0A418; color: #2A2622; }
+.cell.now { background: #2F4A63; border-color: #2F4A63; color: #FBF5E9; }
+.qcard { background: var(--paper); border: 1.5px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+.qtop { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.qtile { width: 42px; height: 46px; flex: none; display: flex; align-items: center; justify-content: center; font: 900 26px/1 Georgia, serif;
+         background: var(--tile); color: #3A2A18; border: 2px solid #2F4A63; border-bottom-width: 5px; border-radius: 8px; }
+.qhint { color: var(--muted); font-size: 15px; font-weight: 700; }
+.qtext { font-size: 19px; font-weight: 700; line-height: 1.35; text-align: center; }
+.fb { min-height: 24px; text-align: center; font-weight: 700; margin: 8px 0 4px; }
+.fb.correct { color: #3E8E41; } .fb.wrong { color: #C8472F; } .fb.partial { color: #A67806; }
+.answer { display: flex; gap: 8px; }
+.answer input { flex: 1; min-width: 0; font: 18px Georgia, serif; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); }
+.answer button { border: 0; cursor: pointer; border-radius: 12px; font: 800 17px/1 Georgia, serif; padding: 0 16px; }
+.answer .p { background: #E0A418; color: #2A2622; border-bottom: 4px solid #A67806; }
+.answer .c { background: #3E8E41; color: #fff; border-bottom: 4px solid #2C6B2F; }
+.answer button:disabled { opacity: .5; }
+.score { font: 900 72px/1 Georgia, serif; text-align: center; margin: 8px 0 0; }
+.stats { display: flex; justify-content: center; gap: 18px; font-weight: 700; margin: 8px 0 14px; }
+.list .row { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.list .row b { display: block; }
+.badge { width: 30px; height: 32px; flex: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; font: 900 15px Georgia, serif; color: #fff; }
+.err { color: #C8472F; text-align: center; font-weight: 700; }
+</style></head><body><main>
+<header><a href="index.html" aria-label="1 Harf 1 Soru ana sayfa"><span class="t">1</span><span class="t a">H</span><span class="t">A</span><span class="t">R</span><span class="t">F</span>&nbsp;<span class="t">1</span><span class="t a">S</span><span class="t">O</span><span class="t">R</span><span class="t">U</span></a></header>
+
+<section id="intro">
+  <h1>Her harfe bir soru, süre işliyor!</h1>
+  <p>A'dan Z'ye 29 soru, 4 dakika. Bilemediğin harfi pas geç, sonra geri dön. İndirmeden, tarayıcında hemen oyna.</p>
+  <div id="captcha"></div>
+  <button class="big-btn" id="start" disabled>Oyna</button>
+  <p class="err" id="introErr" hidden></p>
+  <p class="meta">Günün Bulmacası, dereceli maç, düello, 9 oyun modu ve jokerler uygulamada.</p>
+  <a class="big-btn navy" href="https://play.google.com/store/apps/details?id=com.birharfbirsoru.app">Google Play'den indir</a>
+</section>
+
+<section id="game" hidden>
+  <div class="bar"><span class="pill" id="timer">4:00</span><span class="pill" id="count">✓ 0/29</span></div>
+  <div class="grid" id="grid"></div>
+  <div class="qcard">
+    <div class="qtop"><div class="qtile" id="qtile">A</div><div class="qhint" id="qhint">A harfi ile başlar</div></div>
+    <div class="qtext" id="qtext"></div>
+  </div>
+  <div class="fb" id="fb"></div>
+  <form class="answer" id="form" autocomplete="off">
+    <input id="input" placeholder="Cevabını yaz..." autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send">
+    <button type="button" class="p" id="pass">Pas</button>
+    <button type="submit" class="c" id="send" aria-label="Cevapla">✓</button>
+  </form>
+</section>
+
+<section id="result" hidden>
+  <p class="center meta" id="rtitle">Oyun bitti!</p>
+  <div class="score" id="rscore">0</div>
+  <p class="center meta" style="margin:0">puan</p>
+  <div class="stats"><span style="color:#3E8E41" id="rc"></span><span style="color:#C8472F" id="rw"></span><span style="color:#A67806" id="ru"></span></div>
+  <div class="grid" id="rgrid"></div>
+  <button class="big-btn pass" id="share">Sonucu paylaş</button>
+  <a class="big-btn" href="https://play.google.com/store/apps/details?id=com.birharfbirsoru.app">Uygulamayı indir · daha fazlası</a>
+  <button class="big-btn navy" id="again">Tekrar oyna</button>
+  <h2>Bilemediklerin</h2>
+  <div class="list" id="missed"></div>
+</section>
+
+<footer><a href="gizlilik.html">Gizlilik Politikası</a><a href="kosullar.html">Kullanım Koşulları</a><span>İletişim: <a href="mailto:birharfbirsoru.app@gmail.com">birharfbirsoru.app@gmail.com</a></span></footer>
+</main>
+<script>
+const CFG = window.OYNA_CONFIG || {};
+const sb = window.supabase.createClient(CFG.url, CFG.anonKey);
+const $ = (id) => document.getElementById(id);
+let captchaToken = null;
+let round = null;      // { id, items: [{letter,text,status}], endsAt }
+let cur = 0;
+let busy = false;
+let timerId = null;
+
+async function hasSession() { return !!(await sb.auth.getSession()).data.session; }
+
+async function rpc(fn, args) {
+  const { data, error } = await sb.rpc(fn, args);
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// Doğrulama: oturum yoksa Cloudflare kutusu (bir kez); varsa doğrudan Oyna
+async function init() {
+  if (await hasSession()) { $('start').disabled = false; $('captcha').hidden = true; return; }
+  const draw = () => {
+    if (!window.turnstile) return setTimeout(draw, 200);
+    window.turnstile.render('#captcha', {
+      sitekey: CFG.turnstileKey, language: 'tr',
+      callback: (t) => { captchaToken = t; $('start').disabled = false; },
+    });
+  };
+  draw();
+}
+
+async function start() {
+  $('start').disabled = true; $('introErr').hidden = true;
+  try {
+    if (!(await hasSession())) {
+      const { error } = await sb.auth.signInAnonymously({ options: { captchaToken } });
+      if (error) throw new Error(error.message);
+    }
+    const sentAt = Date.now();
+    const r = await rpc('start_round', { p_mode: 'classic' });
+    const offset = Date.parse(r.server_now) - (sentAt + Date.now()) / 2;
+    round = { id: r.round_id, endsAt: Date.parse(r.ends_at) - offset, items: r.items.map((i) => ({ letter: i.letter, text: i.text, bonus: i.bonus, status: 'pending' })) };
+    cur = 0;
+    show('game'); render(); $('fb').textContent = ''; $('input').value = ''; $('input').focus();
+    clearInterval(timerId); timerId = setInterval(tick, 250); tick();
+  } catch (e) {
+    $('introErr').hidden = false;
+    $('introErr').textContent = /captcha/i.test(e.message) ? 'Doğrulama tamamlanamadı, sayfayı yenileyip tekrar dene.' : e.message;
+    $('start').disabled = false;
+    if (window.turnstile) window.turnstile.reset();
+  }
+}
+
+function show(id) { for (const s of ['intro', 'game', 'result']) $(s).hidden = s !== id; window.scrollTo(0, 0); }
+
+function cells(items, active) {
+  return items.map((it, i) => `<div class="cell ${i === active && it.status !== 'correct' && it.status !== 'wrong' ? 'now' : it.status}">${it.letter}</div>`).join('');
+}
+
+function render() {
+  const it = round.items[cur];
+  $('grid').innerHTML = cells(round.items, cur);
+  $('qtile').textContent = it.letter;
+  $('qhint').textContent = it.bonus ? `★ Bonus soru · ${it.letter} harfi geçer` : `${it.letter} harfi ile başlar${it.status === 'passed' ? ' · pas geçilmişti' : ''}`;
+  $('qtext').textContent = it.text;
+  $('count').textContent = `✓ ${round.items.filter((x) => x.status === 'correct').length}/${round.items.length}`;
+}
+
+function tick() {
+  const left = Math.max(0, Math.ceil((round.endsAt - Date.now()) / 1000));
+  $('timer').textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  $('timer').classList.toggle('low', left <= 30);
+  if (left <= 0) finish();
+}
+
+// Sıradaki soru: önce cevaplanmamışlar, bittiyse pas geçilenler (uygulamadaki gibi)
+function next() {
+  const n = round.items.length;
+  for (const want of ['pending', 'passed']) {
+    for (let k = 1; k <= n; k++) {
+      const i = (cur + k) % n;
+      if (round.items[i].status === want) { cur = i; render(); return; }
+    }
+  }
+  finish();
+}
+
+function pass() {
+  if (busy || !round) return;
+  sb.rpc('pass_item', { p_round: round.id, p_idx: cur }).then(() => {});
+  round.items[cur].status = 'passed';
+  $('fb').textContent = ''; $('input').value = ''; next(); $('input').focus();
+}
+
+async function answer(e) {
+  e.preventDefault();
+  const given = $('input').value.trim();
+  if (!given || busy || !round) return;
+  busy = true; $('send').disabled = true;
+  try {
+    const r = await rpc('submit_answer', { p_round: round.id, p_idx: cur, p_given: given });
+    $('input').value = '';
+    if (r.status === 'passed') { busy = false; $('send').disabled = false; return pass(); }
+    if (r.status === 'rejected') { setFb('partial', r.message || 'Kabul edilmedi'); return; }
+    const it = round.items[cur];
+    const ok = r.status === 'correct';
+    it.status = ok ? 'correct' : 'wrong';
+    setFb(ok ? 'correct' : 'wrong', ok ? `${it.letter}: Doğru! +${r.points}` : `${it.letter}: Yanlış — doğru cevap "${r.reveal}"`);
+    next();
+  } catch (err) {
+    setFb('wrong', err.message);
+  } finally {
+    busy = false; $('send').disabled = false; $('input').focus();
+  }
+}
+
+function setFb(tone, text) { $('fb').className = 'fb ' + tone; $('fb').textContent = text; }
+
+let finishing = false;
+async function finish() {
+  if (finishing || !round) return;
+  finishing = true; clearInterval(timerId);
+  try {
+    const r = await rpc('finish_round', { p_round: round.id, p_left: false });
+    const items = r.items.map((x, i) => ({ ...x, status: x.status || (round.items[i].status === 'passed' ? 'passed' : 'pending') }));
+    $('rtitle').textContent = r.time_left === 0 ? 'Süre doldu!' : 'Oyun bitti!';
+    $('rscore').textContent = r.score;
+    $('rc').textContent = `✓ ${r.correct} doğru`; $('rw').textContent = `✗ ${r.wrong} yanlış`; $('ru').textContent = `${r.unanswered} boş`;
+    $('rgrid').innerHTML = cells(items, -1);
+    const color = { correct: '#3E8E41', wrong: '#C8472F', passed: '#E0A418', pending: '#B78A4C' };
+    $('missed').innerHTML = items.filter((x) => x.status !== 'correct').map((x) =>
+      `<div class="row"><span class="badge" style="background:${color[x.status]}">${x.letter}</span><div><b></b><span></span></div></div>`).join('');
+    const rows = [...$('missed').querySelectorAll('.row')];
+    items.filter((x) => x.status !== 'correct').forEach((x, i) => {
+      rows[i].querySelector('b').textContent = x.text;
+      rows[i].querySelector('span:last-child').textContent = `Cevap: ${x.reveal}${x.given ? ` (senin cevabın: ${x.given})` : ''}`;
+    });
+    const emo = { correct: '🟩', wrong: '🟥', passed: '🟨', pending: '⬜' };
+    window.shareText = `1 Harf 1 Soru: ${r.score} puan, ${r.correct}/${items.length} doğru 🔤\n${items.map((x) => emo[x.status]).join('')}\nSen kaç yaparsın? ${location.origin}${location.pathname}`;
+    show('result');
+  } catch (err) {
+    setFb('wrong', 'Sonuç alınamadı: ' + err.message);
+  } finally {
+    finishing = false; round = null;
+  }
+}
+
+async function share() {
+  try {
+    if (navigator.share) await navigator.share({ text: window.shareText });
+    else { await navigator.clipboard.writeText(window.shareText); $('share').textContent = 'Kopyalandı!'; }
+  } catch {}
+}
+
+$('start').onclick = start;
+$('again').onclick = () => { show('intro'); start(); };
+$('pass').onclick = pass;
+$('form').onsubmit = answer;
+$('share').onclick = share;
+init();
+</script>
+</body></html>

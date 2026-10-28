@@ -7,9 +7,10 @@
 <h1>Sana meydan okundu!</h1>
 <p>Arkadaşın 1 Harf 1 Soru'da bir tur oynadı ve seni aynı sorularla puanını geçmeye çağırıyor.</p>
 <div class="card" id="code" hidden></div>
+<a class="btn" id="web" href="oyna.html">Tarayıcıda hemen oyna</a>
 <a class="btn" id="open" href="#">Uygulamada aç</a>
 <a class="btn" href="https://play.google.com/store/apps/details?id=com.birharfbirsoru.app">Google Play'den indir</a>
-<p class="meta">Uygulama yüklüyse "Uygulamada aç" seni doğrudan meydan okumaya götürür. Yüklü değilse önce indir, ismini seç, sonra bu bağlantıya tekrar dokun.</p>
+<p class="meta">İndirmeden tarayıcında oynayabilirsin. Uygulama yüklüyse "Uygulamada aç" seni doğrudan meydan okumaya götürür.</p>
 <script>
   const q = new URLSearchParams(location.search);
   const c = (q.get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
@@ -19,7 +20,7 @@
     const box = document.getElementById('code');
     box.hidden = false;
     box.textContent = 'Meydan okuma kodu: ' + c;
-    location.href = app; // yüklüyse uygulama açılır
+    document.getElementById('web').href = 'oyna.html?c=' + encodeURIComponent(c);
   }
 </script>
 <footer><a href="gizlilik.html">Gizlilik Politikası</a><a href="kosullar.html">Kullanım Koşulları</a><a href="hesap-silme.html">Hesap Silme</a><span>İletişim: <a href="mailto:birharfbirsoru.app@gmail.com">birharfbirsoru.app@gmail.com</a></span></footer>

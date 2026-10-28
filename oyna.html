@@ -54,8 +54,12 @@ header a { gap: 4px; }
 <header><a href="index.html" aria-label="1 Harf 1 Soru ana sayfa"><span class="t">1</span><span class="t a">H</span><span class="t">A</span><span class="t">R</span><span class="t">F</span>&nbsp;<span class="t">1</span><span class="t a">S</span><span class="t">O</span><span class="t">R</span><span class="t">U</span></a></header>
 
 <section id="intro">
-  <h1>Her harfe bir soru, süre işliyor!</h1>
-  <p>A'dan Z'ye 29 soru, 4 dakika. Bilemediğin harfi pas geç, sonra geri dön. İndirmeden, tarayıcında hemen oyna.</p>
+  <h1 id="ititle">Her harfe bir soru, süre işliyor!</h1>
+  <p id="itext">A'dan Z'ye 29 soru, 4 dakika. Bilemediğin harfi pas geç, sonra geri dön. İndirmeden, tarayıcında hemen oyna.</p>
+  <div id="nameBox" hidden>
+    <p><b>Sıralamada görünecek ismin:</b></p>
+    <form class="answer" id="nameForm" autocomplete="off"><input id="nameInput" maxlength="20" placeholder="İsmin"><button type="submit" class="c">Tamam</button></form>
+  </div>
   <div id="captcha"></div>
   <button class="big-btn" id="start" disabled>Oyna</button>
   <p class="err" id="introErr" hidden></p>
@@ -84,6 +88,7 @@ header a { gap: 4px; }
   <p class="center meta" style="margin:0">puan</p>
   <div class="stats"><span style="color:#3E8E41" id="rc"></span><span style="color:#C8472F" id="rw"></span><span style="color:#A67806" id="ru"></span></div>
   <div class="grid" id="rgrid"></div>
+  <div class="qcard" id="vs" hidden><div class="qtext" id="vsTitle"></div><div class="list" id="vsBoard"></div></div>
   <button class="big-btn pass" id="share">Sonucu paylaş</button>
   <a class="big-btn" href="https://play.google.com/store/apps/details?id=com.birharfbirsoru.app">Uygulamayı indir · daha fazlası</a>
   <button class="big-btn navy" id="again">Tekrar oyna</button>
@@ -102,6 +107,13 @@ let round = null;      // { id, items: [{letter,text,status}], endsAt }
 let cur = 0;
 let busy = false;
 let timerId = null;
+// Meydan okuma linki: oyna.html?c=ABC234 → arkadaşın oynadığı aynı sorular (start_challenge_round)
+const CH = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || null;
+if (CH) {
+  $('ititle').textContent = 'Sana meydan okundu!';
+  $('itext').textContent = 'Arkadaşın 1 Harf 1 Soru\'da bir tur oynadı. Aynı soruları, aynı sürede tarayıcında hemen çöz; puanını geçebilecek misin?';
+  $('again').hidden = true;
+}
 
 async function hasSession() { return !!(await sb.auth.getSession()).data.session; }
 
@@ -131,8 +143,12 @@ async function start() {
       const { error } = await sb.auth.signInAnonymously({ options: { captchaToken } });
       if (error) throw new Error(error.message);
     }
+    if (CH && !(await hasName())) {
+      $('nameBox').hidden = false; $('start').hidden = true; $('nameInput').focus();
+      return;
+    }
     const sentAt = Date.now();
-    const r = await rpc('start_round', { p_mode: 'classic' });
+    const r = CH ? await rpc('start_challenge_round', { p_code: CH }) : await rpc('start_round', { p_mode: 'classic' });
     const offset = Date.parse(r.server_now) - (sentAt + Date.now()) / 2;
     round = { id: r.round_id, endsAt: Date.parse(r.ends_at) - offset, items: r.items.map((i) => ({ letter: i.letter, text: i.text, bonus: i.bonus, status: 'pending' })) };
     cur = 0;
@@ -143,6 +159,21 @@ async function start() {
     $('introErr').textContent = /captcha/i.test(e.message) ? 'Doğrulama tamamlanamadı, sayfayı yenileyip tekrar dene.' : e.message;
     $('start').disabled = false;
     if (window.turnstile) window.turnstile.reset();
+  }
+}
+
+async function hasName() {
+  try { const p = await rpc('my_profile', {}); return !!(p && p.name); } catch { return false; }
+}
+async function saveName(e) {
+  e.preventDefault();
+  const n = $('nameInput').value.trim();
+  if (n.length < 2) return;
+  try {
+    await rpc('set_player_name', { p_name: n });
+    $('nameBox').hidden = true; $('start').hidden = false; start();
+  } catch (err) {
+    $('introErr').hidden = false; $('introErr').textContent = err.message;
   }
 }
 
@@ -231,7 +262,17 @@ async function finish() {
       rows[i].querySelector('span:last-child').textContent = `Cevap: ${x.reveal}${x.given ? ` (senin cevabın: ${x.given})` : ''}`;
     });
     const emo = { correct: '🟩', wrong: '🟥', passed: '🟨', pending: '⬜' };
-    window.shareText = `1 Harf 1 Soru: ${r.score} puan, ${r.correct}/${items.length} doğru 🔤\n${items.map((x) => emo[x.status]).join('')}\nSen kaç yaparsın? ${location.origin}${location.pathname}`;
+    window.shareText = `1 Harf 1 Soru: ${r.score} puan, ${r.correct}/${items.length} doğru 🔤\n${items.map((x) => emo[x.status]).join('')}\nSen kaç yaparsın? ${location.origin}${location.pathname}${CH ? '?c=' + CH : ''}`;
+    if (CH) {
+      try {
+        const info = await rpc('challenge_info', { p_code: CH });
+        const them = info.creator_score;
+        $('vsTitle').textContent = r.score > them ? `${info.creator_name}'i geçtin! 🎉` : r.score === them ? `${info.creator_name} ile berabere!` : `${info.creator_name} bu sefer önde (${them} puan)`;
+        $('vsBoard').innerHTML = info.board.map((b, i) => `<div class="row"><span class="badge" style="background:${b.me ? '#2F4A63' : '#B78A4C'}">${i + 1}</span><div><b></b><span>${b.score} puan · ${b.correct} doğru</span></div></div>`).join('');
+        [...$('vsBoard').querySelectorAll('b')].forEach((el, i) => { el.textContent = info.board[i].name + (info.board[i].me ? ' (sen)' : ''); });
+        $('vs').hidden = false;
+      } catch {}
+    }
     show('result');
   } catch (err) {
     setFb('wrong', 'Sonuç alınamadı: ' + err.message);
@@ -252,6 +293,7 @@ $('again').onclick = () => { show('intro'); start(); };
 $('pass').onclick = pass;
 $('form').onsubmit = answer;
 $('share').onclick = share;
+$('nameForm').onsubmit = saveName;
 init();
 </script>
 </body></html>

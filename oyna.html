@@ -4,7 +4,7 @@
 <meta name="description" content="Her harfe bir soru, süre işliyor! İndirmeden, tarayıcında hemen oyna.">
 <meta property="og:title" content="1 Harf 1 Soru · Tarayıcıda hemen oyna">
 <meta property="og:description" content="Her harfe bir soru, 4 dakika. Kaç tanesini bilirsin?">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css"><script src="magaza.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script src="oyna-config.js"></script>
@@ -64,7 +64,7 @@ header a { gap: 4px; }
   <button class="big-btn" id="start" disabled>Oyna</button>
   <p class="err" id="introErr" hidden></p>
   <p class="meta">Günün Bulmacası, dereceli maç, düello, 9 oyun modu ve jokerler uygulamada.</p>
-  <a class="big-btn navy" href="https://play.google.com/store/apps/details?id=com.birharfbirsoru.app">Google Play'den indir</a>
+  <a class="big-btn navy" data-store href="https://play.google.com/store/apps/details?id=com.birharfbirsoru.app">Google Play'den indir</a>
 </section>
 
 <section id="game" hidden>
@@ -90,7 +90,7 @@ header a { gap: 4px; }
   <div class="grid" id="rgrid"></div>
   <div class="qcard" id="vs" hidden><div class="qtext" id="vsTitle"></div><div class="list" id="vsBoard"></div></div>
   <button class="big-btn pass" id="share">Sonucu paylaş</button>
-  <a class="big-btn" href="https://play.google.com/store/apps/details?id=com.birharfbirsoru.app">Uygulamayı indir · daha fazlası</a>
+  <a class="big-btn" data-store href="https://play.google.com/store/apps/details?id=com.birharfbirsoru.app">Uygulamayı indir · daha fazlası</a>
   <button class="big-btn navy" id="again">Tekrar oyna</button>
   <h2>Bilemediklerin</h2>
   <div class="list" id="missed"></div>

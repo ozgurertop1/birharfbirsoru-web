@@ -1,8 +1,8 @@
 // İndirme butonları cihaza göre: iPhone'da App Store, diğerlerinde Google Play.
-// App Store sayfası açılınca APP_STORE doldurulur (boşken iPhone'a "çok yakında" ve tarayıcıda oyna gösterilir).
+// APP_STORE boşken iPhone'a "çok yakında" ve tarayıcıda oyna gösterilir (iOS 2026-11-06'da yayına girdi).
 (function () {
   var PLAY = 'https://play.google.com/store/apps/details?id=com.birharfbirsoru.app';
-  var APP_STORE = '';
+  var APP_STORE = 'https://apps.apple.com/tr/app/id6829243401';
   var ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   window.STORE_URL = ios ? APP_STORE || 'oyna.html' : PLAY;
   function apply() {

@@ -20,6 +20,8 @@ const PAGE = 50;
 
 // ── Yardımcılar ──────────────────────────────────────────────────────────
 // Oyuncudan gelen her metin (isim, geri bildirim, bildirimdeki cevap) buradan geçer: HTML olarak işlenmez.
+// İsim seçmeden oynayan oyuncu (1.4 "Sonra"): "İsimsiz · 1a2b3c4d"
+const playerLabel = (p) => (p.name ? p.name : `İsimsiz · ${String(p.id || '').slice(0, 8)}`);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const fmtDate = (v) => (v ? new Date(v).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : '—');
 const fmtDay = (v) => (v ? new Date(v + 'T12:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : '—');
@@ -157,6 +159,7 @@ loaders.overview = async () => {
   box.innerHTML = `
     <div class="grid">
       ${stat(o.players, 'oyuncu (isim girmiş)')}
+      ${o.players_unnamed != null ? stat(o.players_unnamed, 'isimsiz oynayan') : ''}
       ${stat(o.players_today, 'bugün yeni oyuncu')}
       ${stat(o.active_today, 'bugün oynayan')}
       ${stat(o.active_7d, 'son 7 günde oynayan')}
@@ -211,9 +214,18 @@ loaders.analytics = async () => {
       ${stat(num(a.opens_7d), 'son 7 gün uygulama açılışı')}
     </div>
     <p class="muted">Hedef (kelime oyunları için kaba ölçü): ertesi gün %35–40, 7. gün %15, 30. gün %7.</p>
-    <div class="card scroll"><b>İlk oyun hunisi (son 60 günde isim girenler)</b>
+    ${a.first_play ? (() => {
+      const fp = a.first_play;
+      const r = (x, y) => (y ? `${Math.round((100 * x) / y)}%` : '—');
+      return `<div class="card"><b>İlk açılış → ilk tur bitirdi (son 30 gün, isim seçmeyenler dahil)</b>
+        <p>${num(fp.finished)} / ${num(fp.opened)} oyuncu · <b>${r(fp.finished, fp.opened)}</b>
+        · yeni akışla (açılışta ısınma turu): ${num(fp.new_flow_finished)} / ${num(fp.new_flow)} · <b>${r(fp.new_flow_finished, fp.new_flow)}</b>
+        · isim seçti: ${num(fp.named)} · "Sonra" dedi: ${num(fp.name_later)}</p></div>`;
+    })() : ''}
+    <div class="card scroll"><b>İlk oyun hunisi (son 60 günde gelenler: isim girenler + isim seçmeden tur oynayanlar)</b>
+      ${f.unnamed != null ? `<p class="muted">İsim girmiş ${num(f.with_name)} · isimsiz ${num(f.unnamed)}</p>` : ''}
       <table><tr><th>Adım</th><th>Oyuncu</th><th>Oran</th></tr>
-      ${step(f.named, 'İsim girdi')}${step(f.started, 'İlk turu başlattı')}${step(f.finished, 'Bir turu bitirdi')}
+      ${step(f.named, 'Oyuncu')}${step(f.started, 'İlk turu başlattı')}${step(f.finished, 'Bir turu bitirdi')}
       ${step(f.three_rounds, '3+ tur bitirdi')}${step(f.two_days, '2+ farklı gün oynadı')}${step(f.daily, 'Günün Bulmacası oynadı')}
       ${step(f.versus, 'Düello oynadı')}${step(f.ranked, 'Dereceli maç oynadı')}</table>
     </div>
@@ -240,16 +252,19 @@ loaders.players = () => loadPlayers();
 $('playerSearchBtn').addEventListener('click', () => { playerPage = 0; loadPlayers(); });
 $('playerSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { playerPage = 0; loadPlayers(); } });
 $('playerSort').addEventListener('change', () => { playerPage = 0; loadPlayers(); });
+$('playerUnnamed').addEventListener('change', () => { playerPage = 0; loadPlayers(); });
 
 async function loadPlayers() {
   $('playerDetail').innerHTML = '';
-  const res = await rpc('admin_players', { p_search: $('playerSearch').value, p_limit: PAGE, p_offset: playerPage * PAGE, p_sort: $('playerSort').value });
+  const res = await rpc('admin_players', {
+    p_search: $('playerSearch').value, p_limit: PAGE, p_offset: playerPage * PAGE, p_sort: $('playerSort').value, p_unnamed: $('playerUnnamed').checked,
+  });
   const pl = res.platforms || {};
   $('playerList').innerHTML = `
-    <p class="muted">Platform: Android ${num(pl.android ?? 0)} · iOS ${num(pl.ios ?? 0)} · Web ${num(pl.web ?? 0)}${pl.bilinmiyor ? ` · bilinmiyor ${num(pl.bilinmiyor)}` : ''}</p>
+    <p class="muted">Platform: Android ${num(pl.android ?? 0)} · iOS ${num(pl.ios ?? 0)} · Web ${num(pl.web ?? 0)}${pl.bilinmiyor ? ` · bilinmiyor ${num(pl.bilinmiyor)}` : ''}${res.unnamed != null ? ` · isimsiz ${num(res.unnamed)}` : ''}</p>
     <div class="card scroll"><table>
-      <tr><th>İsim</th><th>Platform</th><th>Katıldı</th><th>Bugün</th><th>Tur</th><th>Doğru</th><th class="hide-sm">Seri</th><th class="hide-sm">Düello galibiyeti</th><th>Son tur</th></tr>
-      ${res.rows.map((p) => `<tr class="click" data-id="${esc(p.id)}"><td><b>${esc(p.name)}</b></td><td>${PLATFORM[p.platform] ?? '—'}</td><td>${fmtDate(p.created_at)}</td><td><b>${num(p.today_games ?? 0)}</b></td><td>${num(p.games)}</td><td>${num(p.correct_total)}</td><td class="hide-sm">${num(p.daily_streak)}</td><td class="hide-sm">${num(p.versus_wins)}</td><td>${fmtDate(p.last_round)}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">Oyuncu bulunamadı</td></tr>'}
+      <tr><th>İsim</th><th>Platform</th><th>Katıldı</th><th>Bugün</th><th>Seviye</th><th>Tur</th><th>Doğru</th><th class="hide-sm">Seri</th><th class="hide-sm">Düello galibiyeti</th><th>Son tur</th></tr>
+      ${res.rows.map((p) => `<tr class="click" data-id="${esc(p.id)}"><td>${p.name ? `<b>${esc(p.name)}</b>` : `<span class="muted">${esc(playerLabel(p))}</span>`}</td><td>${PLATFORM[p.platform] ?? '—'}</td><td>${fmtDate(p.created_at)}</td><td><b>${num(p.today_games ?? 0)}</b></td><td title="${esc(p.level_title ?? '')} · ${num(p.xp ?? 0)} XP">${p.level != null ? `${num(p.level)} <span class="muted">${esc(p.level_title ?? '')}</span>` : '—'}</td><td>${num(p.games)}</td><td>${num(p.correct_total)}</td><td class="hide-sm">${num(p.daily_streak)}</td><td class="hide-sm">${num(p.versus_wins)}</td><td>${fmtDate(p.last_round)}</td></tr>`).join('') || '<tr><td colspan="10" class="muted">Oyuncu bulunamadı</td></tr>'}
     </table></div>
     ${pager(res.total, playerPage, 'player')}`;
 }
@@ -283,11 +298,12 @@ async function openPlayer(id) {
   const box = $('playerDetail');
   box.innerHTML = `
     <div class="card">
-      <h2 style="margin:0">${esc(p.name)}</h2>
+      <h2 style="margin:0">${esc(playerLabel(p))}</h2>
       <p class="muted">Kimlik: <code>${esc(p.id)}</code><br>
         Katıldı: ${fmtDate(p.created_at)} · Son giriş: ${fmtDate(d.account?.last_sign_in_at)} · İsim değişikliği: ${num(p.name_changes)}</p>
       <div class="grid">
         <div class="stat"><b>${num(s.games)}</b><span>tur</span></div>
+        ${s.xp != null ? `<div class="stat"><b>${num(s.xp)}</b><span>XP</span></div>` : ''}
         <div class="stat"><b>${num(s.correct_total)}</b><span>doğru</span></div>
         <div class="stat"><b>${num(s.daily_played)}</b><span>Günün Bulmacası</span></div>
         <div class="stat"><b>${num(s.daily_streak)} / ${num(s.daily_best_streak)}</b><span>seri / en iyi</span></div>
@@ -301,8 +317,8 @@ async function openPlayer(id) {
         <button class="primary" id="saveJokers">Jokerleri kaydet</button>
       </div>
 
-      <h3>İsim</h3>
-      <div class="bar"><input id="newName" maxlength="20" value="${esc(p.name)}"><button id="rename">İsmi değiştir</button><button id="resetChanges" class="ghost">Değiştirme hakkını sıfırla</button></div>
+      ${p.named === false ? '<h3>İsim</h3><p class="muted">Oyuncu henüz isim seçmedi (ısınma turundan sonra "Sonra" dedi); isim gereken yerde uygulama sorar.</p>' : `<h3>İsim</h3>
+      <div class="bar"><input id="newName" maxlength="20" value="${esc(p.name)}"><button id="rename">İsmi değiştir</button><button id="resetChanges" class="ghost">Değiştirme hakkını sıfırla</button></div>`}
 
       <h3>Son turlar</h3>
       <div class="scroll"><table><tr><th>Başladı</th><th>Mod</th><th>Tür</th><th>Puan</th><th>Pas</th><th>Bitti</th></tr>
@@ -326,21 +342,23 @@ async function openPlayer(id) {
     toast('Jokerler kaydedildi');
     openPlayer(id);
   };
-  $('rename').onclick = async () => {
+  if ($('rename')) $('rename').onclick = async () => {
     await rpc('admin_rename', { p_user: id, p_name: $('newName').value });
     toast('İsim değişti');
     openPlayer(id);
     loadPlayers();
   };
-  $('resetChanges').onclick = async () => {
+  if ($('resetChanges')) $('resetChanges').onclick = async () => {
     await rpc('admin_reset_name_changes', { p_user: id });
     toast('Oyuncu ismini bir kez daha değiştirebilir');
     openPlayer(id);
   };
   $('deleteUser').onclick = async () => {
-    const typed = prompt(`Silmek için oyuncunun ismini aynen yazın: ${p.name}`);
+    // İsimsiz oyuncuda isim yerine kimliğin ilk 8 karakteri yazılır
+    const expected = p.name || String(p.id).slice(0, 8);
+    const typed = prompt(`Silmek için ${p.name ? 'oyuncunun ismini' : 'kimliğin ilk 8 karakterini'} aynen yazın: ${expected}`);
     if (typed === null) return;
-    if (typed.trim() !== p.name) return toast('İsim eşleşmedi, silinmedi.', true);
+    if (typed.trim() !== expected) return toast('Eşleşmedi, silinmedi.', true);
     await rpc('admin_delete_user', { p_user: id });
     toast('Hesap silindi');
     loadPlayers();

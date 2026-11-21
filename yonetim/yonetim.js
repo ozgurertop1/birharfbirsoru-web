@@ -160,6 +160,7 @@ loaders.overview = async () => {
     <div class="grid">
       ${stat(o.players, 'oyuncu (isim girmiş)')}
       ${o.players_unnamed != null ? stat(o.players_unnamed, 'isimsiz oynayan') : ''}
+      ${o.players_lang ? stat(o.players_lang.en ?? 0, `İngilizce oyuncu (Türkçe ${num(o.players_lang.tr ?? 0)})`) : ''}
       ${stat(o.players_today, 'bugün yeni oyuncu')}
       ${stat(o.active_today, 'bugün oynayan')}
       ${stat(o.active_7d, 'son 7 günde oynayan')}
@@ -183,7 +184,7 @@ loaders.overview = async () => {
     </div>
     <div class="card scroll"><b>İçerik</b>
       <table><tr><th>Banka</th><th>Toplam</th><th>Kolay</th><th>Orta</th><th>Zor</th></tr>
-      ${qRow('classic', 'Klasik')}${qRow('english', 'İngilizce')}${qRow('kids', 'Kolay Mod')}</table>
+      ${qRow('classic', 'Klasik')}${qRow('english', 'İngilizce')}${qRow('kids', 'Kolay Mod')}${qRow('en', 'English (en)')}</table>
       <p class="muted">İsim-Şehir-Hayvan: ${num(o.words)} kelime · Futbol: ${num(o.players_fb)} aktif futbolcu</p>
     </div>`;
 };
@@ -244,6 +245,48 @@ loaders.analytics = async () => {
     </div>`;
 };
 
+// ── Gelir (1.5) ──────────────────────────────────────────────────────────
+// Reklamsız paket: sayılar istemcinin beyanı (report_ad_free); gerçek satış ve iade RevenueCat panosunda.
+// Yerleşimler: ödüllü reklam teklifi gösterildi / sonuna kadar izlendi (app_events 'ad').
+const PLACEMENTS = {
+  xp_double: "Sonuç: XP'yi 2'ye katla", result_joker: 'Sonuç: joker', rewards: 'Ödüller ekranı', league_joker: 'Haftalık Lig: joker',
+  live_joker: 'Canlı Yarışma: joker', time_revive: 'Süre doldu: ek süre', sudden_revive: 'Ani Ölüm: devam', interstitial: 'Geçiş reklamı (gösterilen)',
+};
+const ADFREE_STEPS = [['offer', 'Teklif gördü'], ['tap', 'Satın al dedi'], ['purchased', 'Satın aldı'], ['cancelled', 'Vazgeçti'], ['pending', 'Onay bekliyor'], ['error', 'Hata'], ['restore', 'Geri yükle dedi'], ['restored', 'Geri yüklendi'], ['not_found', 'Geri yüklemede bulunamadı'], ['dismiss', '"Şimdi değil"']];
+loaders.revenue = async () => {
+  const box = $('tab-revenue');
+  box.innerHTML = '<p class="muted">Yükleniyor…</p>';
+  const r = await rpc('admin_revenue', { p_days: 14 });
+  const af = r.ad_free || {};
+  const stat = (v, label) => `<div class="stat"><b>${v}</b><span>${esc(label)}</span></div>`;
+  const plat = Object.entries(af.platforms || {}).map(([k, n]) => `${esc(PLATFORM[k] || k)} ${num(n)}`).join(' · ');
+  const f = r.funnel || {};
+  const from = Object.entries(r.funnel_from || {}).map(([k, n]) => `${esc({ result: 'sonuç kartı', settings: 'Ayarlar' }[k] || k)}: ${num(n)}`).join(' · ');
+  box.innerHTML = `
+    <div class="grid">
+      ${stat(num(af.active), 'reklamsız oyuncu (beyan)')}
+      ${stat(num(af.new_7d), 'son 7 gün yeni reklamsız')}
+      ${stat(num(af.ever), 'hiç reklamsız olmuş (iade dahil)')}
+      ${stat(num(r.xp_doubled), `XP katlanan tur (${r.days} gün)`)}
+      ${stat(num(r.xp_doubled_users), 'XP katlayan oyuncu')}
+    </div>
+    ${plat ? `<p class="muted">Platform: ${plat}</p>` : ''}
+    <div class="card scroll"><b>Ödüllü reklam yerleşimleri (son ${num(r.days)} gün)</b>
+      <p class="muted">Gösterildi = teklif ekrana geldi; izlendi = reklam sonuna kadar izlendi (ödül hak edildi). Geçiş reklamında yalnızca gösterilen sayısı.</p>
+      <table><tr><th>Yerleşim</th><th>Gösterildi</th><th>İzlendi</th><th>Yarıda kapattı</th><th>İzleme oranı</th><th>Oyuncu</th></tr>
+      ${(r.placements || []).map((p) => `<tr><td>${esc(PLACEMENTS[p.placement] || p.placement)}</td><td>${num(p.placement === 'interstitial' ? p.shown : p.offers)}</td><td>${p.placement === 'interstitial' ? '—' : num(p.watched)}</td><td>${p.placement === 'interstitial' ? '—' : num(p.skipped)}</td><td>${p.rate == null || p.placement === 'interstitial' ? '—' : `%${p.rate}`}</td><td>${num(p.users)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Henüz yok (ölçüm 1.5 ile başlıyor)</td></tr>'}</table>
+    </div>
+    <div class="card scroll"><b>Reklamsız paket hunisi (son ${num(r.days)} gün)</b>
+      ${from ? `<p class="muted">Teklifi nerede gördü (oyuncu): ${from}</p>` : ''}
+      <table><tr><th>Adım</th><th>Olay</th><th>Oyuncu</th></tr>
+      ${ADFREE_STEPS.filter(([k]) => f[k]).map(([k, label]) => `<tr><td>${esc(label)}</td><td>${num(f[k].events)}</td><td>${num(f[k].users)}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">Henüz yok</td></tr>'}</table>
+    </div>
+    <div class="card scroll"><b>Son ${num(r.days)} gün yeni reklamsız</b>
+      <table><tr><th>Gün</th><th>Oyuncu</th></tr>
+      ${(af.days || []).map((d) => `<tr><td>${fmtDay(d.day)}</td><td>${num(d.n)}</td></tr>`).join('') || '<tr><td colspan="2" class="muted">Henüz yok</td></tr>'}</table>
+    </div>`;
+};
+
 // ── Oyuncular ────────────────────────────────────────────────────────────
 // Platform, oyuncunun son oturumundaki istemci bilgisinden (sunucuda user_platform)
 const PLATFORM = { android: 'Android', ios: 'iOS', web: 'Web' };
@@ -253,18 +296,22 @@ $('playerSearchBtn').addEventListener('click', () => { playerPage = 0; loadPlaye
 $('playerSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { playerPage = 0; loadPlayers(); } });
 $('playerSort').addEventListener('change', () => { playerPage = 0; loadPlayers(); });
 $('playerUnnamed').addEventListener('change', () => { playerPage = 0; loadPlayers(); });
+$('playerLang').addEventListener('change', () => { playerPage = 0; loadPlayers(); });
+const LANG = { tr: 'TR', en: 'EN' };
 
 async function loadPlayers() {
   $('playerDetail').innerHTML = '';
   const res = await rpc('admin_players', {
     p_search: $('playerSearch').value, p_limit: PAGE, p_offset: playerPage * PAGE, p_sort: $('playerSort').value, p_unnamed: $('playerUnnamed').checked,
+    p_lang: $('playerLang').value || null,
   });
+  const langs = res.langs || {};
   const pl = res.platforms || {};
   $('playerList').innerHTML = `
-    <p class="muted">Platform: Android ${num(pl.android ?? 0)} · iOS ${num(pl.ios ?? 0)} · Web ${num(pl.web ?? 0)}${pl.bilinmiyor ? ` · bilinmiyor ${num(pl.bilinmiyor)}` : ''}${res.unnamed != null ? ` · isimsiz ${num(res.unnamed)}` : ''}</p>
+    <p class="muted">Platform: Android ${num(pl.android ?? 0)} · iOS ${num(pl.ios ?? 0)} · Web ${num(pl.web ?? 0)}${pl.bilinmiyor ? ` · bilinmiyor ${num(pl.bilinmiyor)}` : ''}${res.unnamed != null ? ` · isimsiz ${num(res.unnamed)}` : ''} · Dil: Türkçe ${num(langs.tr ?? 0)} · English ${num(langs.en ?? 0)}</p>
     <div class="card scroll"><table>
-      <tr><th>İsim</th><th>Platform</th><th>Katıldı</th><th>Bugün</th><th>Seviye</th><th>Tur</th><th>Doğru</th><th class="hide-sm">Seri</th><th class="hide-sm">Düello galibiyeti</th><th>Son tur</th></tr>
-      ${res.rows.map((p) => `<tr class="click" data-id="${esc(p.id)}"><td>${p.name ? `<b>${esc(p.name)}</b>` : `<span class="muted">${esc(playerLabel(p))}</span>`}</td><td>${PLATFORM[p.platform] ?? '—'}</td><td>${fmtDate(p.created_at)}</td><td><b>${num(p.today_games ?? 0)}</b></td><td title="${esc(p.level_title ?? '')} · ${num(p.xp ?? 0)} XP">${p.level != null ? `${num(p.level)} <span class="muted">${esc(p.level_title ?? '')}</span>` : '—'}</td><td>${num(p.games)}</td><td>${num(p.correct_total)}</td><td class="hide-sm">${num(p.daily_streak)}</td><td class="hide-sm">${num(p.versus_wins)}</td><td>${fmtDate(p.last_round)}</td></tr>`).join('') || '<tr><td colspan="10" class="muted">Oyuncu bulunamadı</td></tr>'}
+      <tr><th>İsim</th><th>Dil</th><th>Platform</th><th>Katıldı</th><th>Bugün</th><th>Seviye</th><th>Tur</th><th>Doğru</th><th class="hide-sm">Seri</th><th class="hide-sm">Düello galibiyeti</th><th>Son tur</th></tr>
+      ${res.rows.map((p) => `<tr class="click" data-id="${esc(p.id)}"><td>${p.name ? `<b>${esc(p.name)}</b>` : `<span class="muted">${esc(playerLabel(p))}</span>`}</td><td>${LANG[p.lang] ?? 'TR'}</td><td>${PLATFORM[p.platform] ?? '—'}</td><td>${fmtDate(p.created_at)}</td><td><b>${num(p.today_games ?? 0)}</b></td><td title="${esc(p.level_title ?? '')} · ${num(p.xp ?? 0)} XP">${p.level != null ? `${num(p.level)} <span class="muted">${esc(p.level_title ?? '')}</span>` : '—'}</td><td>${num(p.games)}</td><td>${num(p.correct_total)}</td><td class="hide-sm">${num(p.daily_streak)}</td><td class="hide-sm">${num(p.versus_wins)}</td><td>${fmtDate(p.last_round)}</td></tr>`).join('') || '<tr><td colspan="11" class="muted">Oyuncu bulunamadı</td></tr>'}
     </table></div>
     ${pager(res.total, playerPage, 'player')}`;
 }
@@ -300,7 +347,7 @@ async function openPlayer(id) {
     <div class="card">
       <h2 style="margin:0">${esc(playerLabel(p))}</h2>
       <p class="muted">Kimlik: <code>${esc(p.id)}</code><br>
-        Katıldı: ${fmtDate(p.created_at)} · Son giriş: ${fmtDate(d.account?.last_sign_in_at)} · İsim değişikliği: ${num(p.name_changes)}</p>
+        Dil: <b>${d.lang === 'en' ? 'English' : 'Türkçe'}</b> · Katıldı: ${fmtDate(p.created_at)} · Son giriş: ${fmtDate(d.account?.last_sign_in_at)} · İsim değişikliği: ${num(p.name_changes)}</p>
       <div class="grid">
         <div class="stat"><b>${num(s.games)}</b><span>tur</span></div>
         ${s.xp != null ? `<div class="stat"><b>${num(s.xp)}</b><span>XP</span></div>` : ''}
@@ -368,7 +415,7 @@ async function openPlayer(id) {
 // ── Sorular ──────────────────────────────────────────────────────────────
 let qPage = 0;
 let qRows = [];
-const lettersOf = (bank) => (bank === 'english' ? EN_LETTERS : TR_LETTERS);
+const lettersOf = (bank) => (bank === 'english' || bank === 'en' ? EN_LETTERS : TR_LETTERS);
 
 function fillLetterFilter() {
   options($('qLetter'), [['', 'Tüm harfler'], ...lettersOf($('qBank').value).map((l) => [l, l])], '');
@@ -486,7 +533,7 @@ loaders.reports = async () => {
   $('reportList').innerHTML = reportRows.length
     ? reportRows.map((r, i) => `
       <div class="card">
-        <div><span class="pill">${esc(r.bank === 'football' ? 'Futbol' : { classic: 'Klasik', english: 'İngilizce', kids: 'Kolay Mod' }[r.bank])}</span>
+        <div><span class="pill">${esc(r.bank === 'football' ? 'Futbol' : { classic: 'Klasik', english: 'İngilizce', kids: 'Kolay Mod', en: 'English' }[r.bank])}</span>
           <b>${esc(r.letter)}</b> · <b>${r.count}</b> bildirim · son ${fmtDate(r.last)} ${r.active ? '' : '<span class="pill">pasif</span>'}</div>
         <div class="msg"><b>${esc(r.text)}</b></div>
         <div>Cevap: ${(r.answers || []).map(esc).join(' | ')}</div>
@@ -570,7 +617,7 @@ $('dailyBox').addEventListener('click', (e) => {
 // ── Kelimeler ────────────────────────────────────────────────────────────
 let wCats = null;
 loaders.words = async () => {
-  const res = await rpc('admin_words', { p_category: $('wCat').value || null, p_search: $('wSearch').value, p_limit: 300 });
+  const res = await rpc('admin_words', { p_category: $('wCat').value || null, p_search: $('wSearch').value, p_limit: 300, p_lang: $('wLang').value });
   if (!wCats) {
     wCats = res.categories;
     options($('wCat'), wCats.map((c) => [c.id, `${c.name} (${c.count})`]), wCats[0]?.id);
@@ -580,12 +627,14 @@ loaders.words = async () => {
     <div class="chips">${res.rows.map((w) => `<span class="chip">${esc(w.word)}<button title="Sil" data-word="${esc(w.word)}">×</button></span>`).join('')}</div>`;
 };
 $('wCat').addEventListener('change', loaders.words);
+$('wLang').addEventListener('change', () => { wCats = null; loaders.words(); });
 $('wSearchBtn').addEventListener('click', loaders.words);
 $('wSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') loaders.words(); });
 $('wAdd').addEventListener('click', async () => {
   const word = $('wNew').value.trim();
   if (!word) return;
-  await rpc('admin_add_word', { p_category: $('wCat').value, p_word: trUpper(word[0]) + word.slice(1) });
+  const en = $('wLang').value === 'en';
+  await rpc('admin_add_word', { p_category: $('wCat').value, p_word: (en ? word[0].toUpperCase() : trUpper(word[0])) + word.slice(1), p_lang: $('wLang').value });
   $('wNew').value = '';
   toast('Kelime eklendi');
   wCats = null;
@@ -596,7 +645,7 @@ $('wAdd').addEventListener('click', async () => {
 $('wList').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-word]');
   if (!b || !confirm(`"${b.dataset.word}" silinsin mi?`)) return;
-  await rpc('admin_remove_word', { p_category: $('wCat').value, p_word: b.dataset.word });
+  await rpc('admin_remove_word', { p_category: $('wCat').value, p_word: b.dataset.word, p_lang: $('wLang').value });
   toast('Kelime silindi');
   loaders.words();
 });

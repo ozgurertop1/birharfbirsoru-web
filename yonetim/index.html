@@ -32,6 +32,7 @@
   <nav id="tabs">
     <button data-tab="overview" class="on">Genel bakış</button>
     <button data-tab="analytics">Analitik</button>
+    <button data-tab="revenue">Gelir</button>
     <button data-tab="players">Oyuncular</button>
     <button data-tab="questions">Sorular</button>
     <button data-tab="reports">Bildirimler <span id="badgeReports" class="badge" hidden></span></button>
@@ -44,16 +45,17 @@
 
   <div class="tab" id="tab-overview"></div>
   <div class="tab" id="tab-analytics" hidden></div>
+  <div class="tab" id="tab-revenue" hidden></div>
 
   <div class="tab" id="tab-players" hidden>
-    <div class="bar"><input id="playerSearch" placeholder="İsim ya da kimlik (ilk 4+ karakter) ara"><select id="playerSort" title="Sıralama"><option value="recent">Son oynayan önce</option><option value="joined">Yeni katılan önce</option><option value="today">Bugün en çok oynayan</option><option value="games">En çok tur önce</option><option value="level">En yüksek seviye önce</option></select><label class="muted" title="Isınma turundan sonra isim seçmeyen (Sonra diyen) oyuncular"><input type="checkbox" id="playerUnnamed" checked> İsimsizleri göster</label><button id="playerSearchBtn">Ara</button></div>
+    <div class="bar"><input id="playerSearch" placeholder="İsim ya da kimlik (ilk 4+ karakter) ara"><select id="playerSort" title="Sıralama"><option value="recent">Son oynayan önce</option><option value="joined">Yeni katılan önce</option><option value="today">Bugün en çok oynayan</option><option value="games">En çok tur önce</option><option value="level">En yüksek seviye önce</option></select><select id="playerLang" title="Oyuncunun dili (1.5)"><option value="">Bütün diller</option><option value="tr">Türkçe</option><option value="en">English</option></select><label class="muted" title="Isınma turundan sonra isim seçmeyen (Sonra diyen) oyuncular"><input type="checkbox" id="playerUnnamed" checked> İsimsizleri göster</label><button id="playerSearchBtn">Ara</button></div>
     <div id="playerList"></div>
     <div id="playerDetail"></div>
   </div>
 
   <div class="tab" id="tab-questions" hidden>
     <div class="bar wrap">
-      <select id="qBank"><option value="classic">Klasik</option><option value="english">İngilizce</option><option value="kids">Kolay Mod</option></select>
+      <select id="qBank"><option value="classic">Klasik</option><option value="english">İngilizce kelime</option><option value="kids">Kolay Mod</option><option value="en">English (en)</option></select>
       <select id="qLetter"></select>
       <select id="qDiff"><option value="">Tüm zorluklar</option><option>kolay</option><option>orta</option><option>zor</option></select>
       <select id="qActive"><option value="">Aktif + pasif</option><option value="true">Sadece aktif</option><option value="false">Sadece pasif</option></select>
@@ -78,7 +80,7 @@
   </div>
 
   <div class="tab" id="tab-words" hidden>
-    <div class="bar wrap"><select id="wCat"></select><input id="wSearch" placeholder="Başlangıç harfleri (ör. Ka)"><button id="wSearchBtn">Listele</button></div>
+    <div class="bar wrap"><select id="wLang" title="Kelime dili"><option value="tr">Türkçe</option><option value="en">English</option></select><select id="wCat"></select><input id="wSearch" placeholder="Başlangıç harfleri (ör. Ka)"><button id="wSearchBtn">Listele</button></div>
     <div class="bar"><input id="wNew" placeholder="Yeni kelime (ör. Kanarya)"><button id="wAdd" class="primary">Ekle</button></div>
     <div id="wList"></div>
   </div>
